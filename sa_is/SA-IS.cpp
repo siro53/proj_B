@@ -1,7 +1,16 @@
-#include <bits/stdc++.h>
-using namespace std;
-#define repl(i, a, b) for(int i = (a); i < int(b); i++)
-#define rep(i, n) repl(i, 0, n);
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
+using std::cin;
+using std::cout;
+using std::ifstream;
+using std::string;
+using std::vector;
+
+#define TESTCASE_NUM 20
 
 class SA_IS {
   private:
@@ -27,6 +36,7 @@ class SA_IS {
         }
 
         // まずtype-S*がソートされていると仮定して、induced_sortを行う。
+        // induced_sort後はS*部分列はソートされている
         vector<int> pre_SA = induced_sort(t, LMSs, is_S, alp_sz);
         vector<int> sorted_LMSs(LMSs.size(), 0);
         {
@@ -36,6 +46,7 @@ class SA_IS {
             }
         }
 
+        // S*部分文字列の順序を決定する
         int rank = 0;
         pre_SA[sorted_LMSs[0]] = 0;
         if(int(sorted_LMSs.size()) > 1) pre_SA[sorted_LMSs[1]] = ++rank;
@@ -56,6 +67,7 @@ class SA_IS {
                 pre_SA[sorted_LMSs[i + 1]] = rank;
             }
         }
+        // S*部分文字列の順序を元に新しい文字列を作る
         vector<int> new_t(LMSs.size());
         {
             int id = 0;
@@ -66,6 +78,7 @@ class SA_IS {
                 }
             }
         }
+        // 再帰的にS* suffixの順序を求める
         vector<int> new_sa(LMSs.size(), 0);
         if(rank + 1 == int(LMSs.size())) {
             new_sa = sorted_LMSs;
@@ -75,7 +88,7 @@ class SA_IS {
                 new_sa[i] = LMSs[new_sa[i]];
             }
         }
-
+        // S*のソートが終わったので最後にinduced_sort
         auto res = induced_sort(t, new_sa, is_S, alp_sz);
         return res;
     }
@@ -136,9 +149,17 @@ class SA_IS {
 };
 
 int main() {
-    string s;
-    cin >> s;
-    SA_IS sa(s);
-    int n = int(s.size());
-    for(int i = 0; i < n; i++) cout << sa[i] << " \n"[i + 1 == n];
+    double sum = 0;
+    for(int i = 0; i < TESTCASE_NUM; i++) {
+        string filename = "test/random" + std::to_string(i + 1) + ".in";
+        ifstream In(filename);
+        string s;
+        In >> s;
+        clock_t start = clock();
+        SA_IS sa(s);
+        clock_t end = clock();
+        sum += (double)(end - start);
+    }
+    sum /= TESTCASE_NUM;
+    printf("SA-IS time: %lf sec\n", sum / CLOCKS_PER_SEC);
 }
