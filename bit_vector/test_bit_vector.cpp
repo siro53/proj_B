@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <time.h>
 #include <vector>
 
 using u16 = uint16_t;
@@ -80,48 +79,53 @@ class bit_vector {
 
 #define TESTCASE_NUM 20
 
-int main() {
-    double access_time = 0;
-    double rank_time = 0;
-    double select_time = 0;
-    double start, end;
-
-    bit_vector bv(100100);
-
-    for(int t = 1; t <= TESTCASE_NUM; t++) {
-        string filename = "test/random" + std::to_string(t) + ".in";
-        std::ifstream In(filename);
-        string s;
-        In >> s;
-        int n = int(s.size());
-        int cnt = 0;
-        for(int i = 0; i < n; i++) {
-            bv.set(i, s[i] - '0');
-            cnt += (s[i] == '1');
-        }
-        bv.build();
-        // access
-        start = clock();
-        for(int i = 0; i < n; i++) u16 tmp = bv.access(i);
-        end = clock();
-        access_time += double(end - start);
-        // rank
-        start = clock();
-        for(int i = 0; i < n; i++) u32 tmp = bv.rank(i);
-        end = clock();
-        rank_time += double(end - start);
-        // select
-        start = clock();
-        for(int i = 1; i <= cnt; i++) u16 tmp = bv.select(i);
-        end = clock();
-        select_time += double(end - start);
-        printf("testcase%d finished.\n", t);
+void judge(string filename) {
+    filename = "test/" + filename;
+    std::ifstream In(filename);
+    string s;
+    In >> s;
+    int n = int(s.size());
+    bit_vector bv(n);
+    for(int i = 0; i < n; i++) bv.set(i, s[i] - '0');
+    bv.build();
+    vector<int> rank(n + 1, 0);
+    vector<int> select;
+    for(int i = 0; i < n; i++) {
+        rank[i + 1] = rank[i] + (s[i] - '0');
+        if(s[i] == '1') select.push_back(i + 1);
     }
-    access_time /= TESTCASE_NUM;
-    rank_time /= TESTCASE_NUM;
-    select_time /= TESTCASE_NUM;
+    // access check
+    for(int i = 0; i < n; i++) {
+        if((s[i] - '0') != bv.access(i)) {
+            fprintf(stderr, "testcase %s: access() error.\n", filename.c_str());
+            exit(1);
+        }
+    }
+    // rank check
+    for(int i = 0; i <= n; i++) {
+        if(rank[i] != bv.rank(i)) {
+            fprintf(stderr, "testcase %s: rank() error.\n", filename.c_str());
+            exit(1);
+        }
+    }
+    // select check
+    for(int i = 0; i < select.size(); i++) {
+        if(bv.select(i + 1) != select[i]) {
+            fprintf(stderr, "testcase %s: select() error.\n", filename.c_str());
+            exit(1);
+        }
+    }
+    printf("testcase %s passed.\n", filename.c_str());
+}
 
-    printf("access() time: %lf sec\n", double(access_time / CLOCKS_PER_SEC));
-    printf("rank() time: %lf sec\n", double(rank_time / CLOCKS_PER_SEC));
-    printf("select() time: %lf sec\n", double(select_time / CLOCKS_PER_SEC));
+int main() {
+    judge("hand1.in");
+    judge("min1.in");
+    judge("min2.in");
+    judge("allzero.in");
+    judge("allone.in");
+    for(int t = 1; t <= TESTCASE_NUM; t++) {
+        string filename = "random" + std::to_string(t) + ".in";
+        judge(filename);
+    }
 }

@@ -4,3 +4,5 @@ sa_is/testcase_gen
 sa_is/doubling_sa
 bit_vector/testcase_gen
 bit_vector/bit_vector
+bit_vector/test_bit_vector
+bit_vector/simple
