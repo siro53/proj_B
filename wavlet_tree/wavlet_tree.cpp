@@ -1,20 +1,27 @@
+#include <algorithm>
 #include <assert.h>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <queue>
 #include <string>
 #include <time.h>
+#include <tuple>
 #include <vector>
 
 using u16 = uint16_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 using std::cerr;
+using std::cin;
 using std::cout;
 using std::endl;
+using std::get;
 using std::ostream;
 using std::pair;
+using std::priority_queue;
 using std::string;
+using std::tuple;
 using std::vector;
 
 #define DEBUG
@@ -126,7 +133,7 @@ ostream &operator<<(ostream &os, bit_vector &bv) {
     return os;
 }
 
-template <int alp_size> class wavlet_tree {
+class wavlet_tree {
   private:
     struct Node {
         int l, r;
@@ -137,6 +144,7 @@ template <int alp_size> class wavlet_tree {
         Node() : l(0), r(0), ch{nullptr, nullptr}, par(nullptr) {}
     };
     int n;
+    int alp_size;
     Node *root;
     vector<int> dat;
 
@@ -157,18 +165,14 @@ template <int alp_size> class wavlet_tree {
     }
 
   public:
-    wavlet_tree(vector<int> v) : n(v.size()), root(nullptr), dat(v) { build(); }
+    wavlet_tree(vector<int> v, int alp_sz)
+        : n(v.size()), root(nullptr), dat(v), alp_size(alp_sz) {
+        build();
+    }
     void build() {
         root = new Node;
         auto dfs = [&](auto self, int l, int r, Node *now,
                        vector<int> &v) -> void {
-            if(r - l == 1) {
-                now->l = l, now->r = r;
-                now->dat.push_back(v[0]);
-                now->bv = bit_vector(1);
-                now->bv.set(0, 1);
-                return;
-            }
             int mid = (l + r) / 2;
             vector<int> L, R;
             now->l = l, now->r = r;
@@ -184,6 +188,7 @@ template <int alp_size> class wavlet_tree {
                 }
             }
             now->bv.build();
+            if(r - l == 1) return;
             if(mid - l > 0) {
                 now->ch[0] = new Node;
                 now->ch[0]->par = now;
@@ -196,7 +201,7 @@ template <int alp_size> class wavlet_tree {
             }
         };
         dfs(dfs, 0, alp_size, root, dat);
-        debug_print(root);
+        // debug_print(root);
     }
     int access(int i) {
         int res = -1;
@@ -272,7 +277,79 @@ template <int alp_size> class wavlet_tree {
         dfs(dfs, root, s, e, rank);
         return res;
     }
-    vector<pair<int, int>> topk(int s, int e, int k) {}
+    vector<int> topk(int s, int e, int k) {
+        using Data = tuple<Node *, int, int>;
+        auto compare = [](const Data &a, const Data &b) {
+            return (get<2>(a) - get<1>(a)) < (get<2>(b) - get<1>(b));
+        };
+        priority_queue<Data, vector<Data>, decltype(compare)> que{compare};
+        que.emplace(root, s, e);
+        vector<int> res;
+        while(!que.empty() && (int)res.size() < k) {
+            auto [now, st, en] = que.top();
+            que.pop();
+            if(is_leaf(now)) {
+                res.push_back(now->l);
+                continue;
+            }
+            for(int b = 0; b < 2; b++) {
+                int bcnt = now->bv.rank(now->bv.size(), b);
+                int ns = now->bv.select(1, b) - 1;
+                int ne = now->bv.select(bcnt, b);
+                que.emplace(now->ch[b], ns, ne);
+            }
+        }
+        return res;
+    }
+    int rangefreq(int s, int e, int x, int y) {
+        int res = rank(x, e) - rank(x, s);
+        auto dfs_x = [&](auto self, Node *now, int st, int en) -> void {
+            if(is_leaf(now)) return;
+            int b = left_or_right(now, x);
+            // 右の子のrankを求めて、resに足す
+            int L, R;
+            if(!is_root(now) && b == 0) {
+                L = now->bv.rank(st, 1);
+                R = now->bv.rank(en, 1);
+                res += R - L;
+            }
+            L = now->bv.rank(st, b);
+            R = now->bv.rank(en, b);
+            self(self, now->ch[b], L, R);
+        };
+        auto dfs_y = [&](auto self, Node *now, int st, int en) -> void {
+            if(is_leaf(now)) return;
+            int b = left_or_right(now, y);
+            // 左の子の範囲を求めて、resに足す
+            int L, R;
+            if(!is_root(now) && b == 1) {
+                L = now->bv.rank(st, 0);
+                R = now->bv.rank(en, 0);
+                res += R - L;
+            }
+            L = now->bv.rank(st, b);
+            R = now->bv.rank(en, b);
+            self(self, now->ch[b], L, R);
+        };
+        dfs_x(dfs_x, root, s, e);
+        dfs_y(dfs_y, root, s, e);
+        if(y == alp_size) res += rank(y - 1, e) - rank(y - 1, s);
+        return res;
+    }
+};
+
+template <typename T> struct Compress {
+    vector<T> v;
+    Compress() {}
+    Compress(vector<T> vv) : v(vv) {
+        std::sort(v.begin(), v.end());
+        v.erase(std::unique(v.begin(), v.end()), v.end());
+    }
+    int get(T x) {
+        return (int)(std::lower_bound(v.begin(), v.end(), x) - v.begin());
+    }
+    T &operator[](int i) { return v[i]; }
+    size_t size() { return v.size(); }
 };
 
 int main() {
@@ -282,4 +359,6 @@ int main() {
     debug(wav.rank(0, 5));
     debug(wav.select(2, 1));
     debug(wav.qualtile(1, 5, 2));
+    debug(wav.topk(0, 12, 3));
+    debug(wav.rangefreq(0, 12, 0, 4));
 }
