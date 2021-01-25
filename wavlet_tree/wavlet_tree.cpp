@@ -102,7 +102,8 @@ class bit_vector {
         return (B[b_id] >> k & 1);
     }
     // B[0, i)の中のb={0,1}の個数を返す
-    u32 rank(const u32 i, const int b) {
+    u32 rank(u32 i, const int b) {
+        i = std::clamp(u32(1), n, i);
         u32 l_id = i / L_SIZE;
         u32 b_id = i % L_SIZE / S_SIZE;
         u32 s_id = i % S_SIZE;
@@ -338,27 +339,31 @@ class wavlet_tree {
     }
 };
 
-template <typename T> struct Compress {
-    vector<T> v;
-    Compress() {}
-    Compress(vector<T> vv) : v(vv) {
-        std::sort(v.begin(), v.end());
-        v.erase(std::unique(v.begin(), v.end()), v.end());
-    }
-    int get(T x) {
-        return (int)(std::lower_bound(v.begin(), v.end(), x) - v.begin());
-    }
-    T &operator[](int i) { return v[i]; }
-    size_t size() { return v.size(); }
-};
+#define TESTCASE_NUM 5
 
 int main() {
-    vector<int> v = {3, 0, 2, 0, 1, 3, 0, 1, 2, 1, 3, 2};
-    wavlet_tree<4> wav(v);
-    for(int i = 0; i < int(v.size()); i++) debug(wav.access(i));
-    debug(wav.rank(0, 5));
-    debug(wav.select(2, 1));
-    debug(wav.qualtile(1, 5, 2));
-    debug(wav.topk(0, 12, 3));
-    debug(wav.rangefreq(0, 12, 0, 4));
+    double sum = 0;
+    for(int t = 0; t < TESTCASE_NUM; t++) {
+        string filename = "test/random" + std::to_string(t + 1) + ".in";
+        std::ifstream In(filename);
+        int n, asz;
+        In >> n >> asz;
+        vector<int> dat(n);
+        for(int i = 0; i < n; i++) { In >> dat[i]; }
+        static wavlet_tree wt(dat, asz);
+        int q;
+        In >> q;
+        double total = 0;
+        for(int _ = 0; _ < q; _++) {
+            int r, c;
+            In >> r >> c;
+            clock_t start = clock();
+            int res = wt.rank(c, r);
+            clock_t end = clock();
+            total += double(end - start);
+        }
+        total /= q;
+    }
+    sum /= TESTCASE_NUM;
+    printf("rank() time: %lf sec\n", sum / CLOCKS_PER_SEC);
 }
