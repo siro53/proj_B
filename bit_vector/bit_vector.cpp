@@ -78,7 +78,7 @@ class bit_vector {
     }
 };
 
-#define TESTCASE_NUM 20
+#define TESTCASE_NUM 5
 
 int main() {
     double access_time = 0;
@@ -86,14 +86,13 @@ int main() {
     double select_time = 0;
     double start, end;
 
-    bit_vector bv(100100);
-
     for(int t = 1; t <= TESTCASE_NUM; t++) {
         string filename = "test/random" + std::to_string(t) + ".in";
         std::ifstream In(filename);
         string s;
         In >> s;
         int n = int(s.size());
+        bit_vector bv(n);
         int cnt = 0;
         for(int i = 0; i < n; i++) {
             bv.set(i, s[i] - '0');

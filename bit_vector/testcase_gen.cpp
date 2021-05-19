@@ -2,7 +2,7 @@
 #include <random>
 #include <string>
 
-#define TESTCASE_NUM 20
+#define TESTCASE_NUM 5
 
 int randint(int l, int r) {
     std::random_device seed_gen;
@@ -13,7 +13,7 @@ int randint(int l, int r) {
 
 int main() {
     for(int t = 0; t < TESTCASE_NUM; t++) {
-        int n = 100000;
+        int n = 1000000;
         std::string s = "";
         for(int i = 0; i < n; i++) {
             char c = (char)('0' + randint(0, 1));

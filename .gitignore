@@ -6,3 +6,4 @@ bit_vector/testcase_gen
 bit_vector/bit_vector
 bit_vector/test_bit_vector
 bit_vector/simple
+.vscode

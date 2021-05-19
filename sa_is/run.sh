@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# rm -rf test 
+# mkdir test
+# g++ testcase_gen.cpp -o testcase_gen
+# ./testcase_gen
 g++ SA-IS.cpp -o SA-IS
 echo -e "\e[32mSA_IS.cpp compiled. \e[m"
 g++ doubling_sa.cpp -p doubling_sa

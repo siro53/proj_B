@@ -9,7 +9,7 @@
 using std::string;
 using std::vector;
 
-#define TESTCASE_NUM 20
+#define TESTCASE_NUM 5
 
 int main() {
     double access_time = 0;
@@ -17,14 +17,13 @@ int main() {
     double select_time = 0;
     double start, end;
 
-    vector<int> rank(100100);
-
     for(int t = 1; t <= TESTCASE_NUM; t++) {
         string filename = "test/random" + std::to_string(t) + ".in";
         std::ifstream In(filename);
         string s;
         In >> s;
         int n = int(s.size());
+        vector<int> rank(n);
         int cnt = 0;
         for(int i = 0; i < n; i++) {
             rank[i + 1] = (s[i] == '1');

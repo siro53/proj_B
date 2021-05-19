@@ -11,7 +11,7 @@ using std::ifstream;
 using std::string;
 using std::vector;
 
-#define TESTCASE_NUM 20
+#define TESTCASE_NUM 5
 
 class doubling_SA {
   private:
